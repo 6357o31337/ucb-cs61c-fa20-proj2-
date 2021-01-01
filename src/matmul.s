@@ -31,17 +31,25 @@ matmul:
 
 
     # Prologue
-    addi sp, sp, -8
+    addi sp, sp, -32
     sw s0, 0(sp)
-    sw ra, 4(sp)
+    sw s1, 4(sp)
+    sw s2, 8(sp)
+    sw s3, 12(sp)
+    sw s4, 16(sp)
+    sw s5, 20(sp)
+    sw s6, 24(sp)
+    # sw s7, 28(sp)
+    sw ra, 28(sp)
     
     
     
-    mv t0 zero
-    mv t1, a1
+    mv s0 zero
+    mv s1, a1
+    mv s2, a0
     mv a1, a3
     # mv t3, a4
-    mv t6, a6
+    mv s6, a6
     # mv t7, a3
 
 
@@ -52,34 +60,35 @@ matmul:
     mv a4, a5
 
     # mul t4, a3, a2 # t4 := 4 * (# of col of m0)
-    li s0, 4
-    mul t4, s0, a2
+    li a5, 4
+    mul s4, a5, a2
 
-    mul t3, s0, a4
+    mul s3, a5, a4
 
 outer_loop_start:
     # we are done once t0 >= t1
-    bge t0, t1, outer_loop_end
+    bge s0, s1, outer_loop_end
 
-    mv t5, zero
+    mv s5, zero
 
 
     # mv a1, t7
 
 inner_loop_start:
     # inner_loop end once t5 >= a2
-    bge t5, a5, inner_loop_end
+    bge s5, a4, inner_loop_end
 
 
+    mv a0, s2
     jal ra dot
-    sw a0, 0(t6)
+    sw a0, 0(s6)
 
-    add t6, t6, s0 # 4
-    add a1, a1, s0
+    add s6, s6, a5 # 4
+    add a1, a1, a5
 
 
 
-    addi t5, t5, 1
+    addi s5, s5, 1
     j inner_loop_start
 
 
@@ -87,11 +96,11 @@ inner_loop_start:
 
 inner_loop_end:
 
-    sub a1, a1, t3 # a1 := a1 - 4*(# of col of m1)
+    sub a1, a1, s3 # a1 := a1 - 4*(# of col of m1)
 
-    add a0, a0, t4 # t3 := t3 + 4*(# of col of m0)
+    add s2, s2, s4 # t3 := t3 + 4*(# of col of m0)
 
-    addi t0, t0, 1
+    addi s0, s0, 1
     j outer_loop_start
 
 outer_loop_end:
@@ -99,7 +108,14 @@ outer_loop_end:
 
     # Epilogue
     lw s0, 0(sp)
-    lw ra, 4(sp)
-    addi sp, sp, 8
+    lw s1, 4(sp)
+    lw s2, 8(sp)
+    lw s3, 12(sp)
+    lw s4, 16(sp)
+    lw s5, 20(sp)
+    lw s6, 24(sp)
+    # lw s7, 28(sp)
+    lw ra, 28(sp)
+    addi sp, sp, 32
     
     ret
